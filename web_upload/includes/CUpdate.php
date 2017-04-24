@@ -37,7 +37,7 @@
 		}
 		else if($this->getCurrentRevision() == -1) // They have some fubar version fix it for them :|
 		{
-			$GLOBALS['db']->Execute("INSERT INTO `".DB_PREFIX."_settings` (`setting`, `value`) VALUES ('config.version', '0')");
+			$GLOBALS['db']->run("INSERT INTO `:prefix:settings` (`setting`, `value`) VALUES ('config.version', '0')");
 		}
 	}
 	
@@ -63,11 +63,13 @@
 			{
 				$i++;
 				$retstr .= "Запуск обновления: <b>Версии: " . $version . "</b>... ";
+				$GLOBALS['db']->startTransaction();
 				if( !include (ROOT . "updater/data/" . $key))
 				{
 					// OHSHI! Something went tits up :(
 					$retstr .= "<b>Ошибка запуска обновления под номером: /updater/data/" . $key . ". Остановка процесса!</b>";
 					$error = true;
+					$GLOBALS['db']->cancelTransaction();
 					break;
 				}
 				else
@@ -75,6 +77,7 @@
 					// File was executed successfully 
 					$retstr .= "Успешно.<br /><br />";
 					$this->_updateVersionNumber($version);
+					$GLOBALS['db']->endTransaction();
 				}
 			}
 		}
@@ -110,7 +113,7 @@
 	
 	function _updateVersionNumber($rev)
 	{
-		$ret = $GLOBALS['db']->Execute("UPDATE ".DB_PREFIX."_settings SET value = ? WHERE setting = 'config.version';", array((int)$rev));
+		$ret = $GLOBALS['db']->run("UPDATE :prefix:settings SET value = ? WHERE setting = 'config.version';", array((int)$rev));
 		return !(empty($ret));
 	}
 	
