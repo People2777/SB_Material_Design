@@ -1,10 +1,12 @@
 <?php
-	$ret = $GLOBALS['db']->Execute("INSERT INTO `".DB_PREFIX."_settings` (`setting`, `value`) VALUES ('theme.bg.size', '');");
-	if(!$ret){
-		$ret1 = $GLOBALS['db']->Execute("UPDATE `".DB_PREFIX."_settings` SET `setting` = 'theme.bg.size', `value` = '' WHERE `setting` = 'theme.bg.size' AND `setting` = 'theme.bg.size' COLLATE utf8mb4_bin;");
-		if(!$ret1){
-			return false;
-		}
-	}
-	return true;
-?>
+try {
+    $GLOBALS['db']->run("INSERT INTO `:prefix:settings` (`setting`, `value`) VALUES ('theme.bg.size', '');");
+} catch (\PDOException $e) {
+    try {
+        $GLOBALS['db']->run("UPDATE `:prefix:settings` SET `setting` = 'theme.bg.size', `value` = '' WHERE `setting` = 'theme.bg.size' AND `setting` = 'theme.bg.size' COLLATE utf8mb4_bin;");
+    } catch (\PDOException $e) {
+        return false;
+    }
+}
+
+return true;

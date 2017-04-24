@@ -1,31 +1,27 @@
 <?php
+try {
     $_need_expired = true;
-    $_struct = $GLOBALS['db']->GetAll("DESCRIBE `" . DB_PREFIX . "_admins`");
+    $_struct = $GLOBALS['db']->getAll("DESCRIBE `:prefix:admins`");
     foreach ($_struct as $_obj) {
         if ($_obj['Field'] == "expired") {
             $_need_expired = false;
             break;
         }
     }
-    
-    if ($_need_expired) {
-        $_expired = $GLOBALS['db']->Execute("ALTER TABLE `" . DB_PREFIX . "_admins` 
-            ADD `expired` 	int(11) NULL;");
-        
-        if (!$_expired)
-            return false;
-    }
-    
-	$_admins = $GLOBALS['db']->Execute("ALTER TABLE `" . DB_PREFIX . "_admins` 
-			ADD `skype`		varchar(128) 	NULL,
-			ADD `comment`	varchar(128)	 NULL,
-			ADD `vk`		varchar(128) 	NULL,
-			ADD `support`	int(6) 			NULL DEFAULT '0';");
 
-	if(!$_admins)
-		return false;
-		
-	$_settings = $GLOBALS['db']->Execute("INSERT INTO `" . DB_PREFIX . "_settings` (`setting`, `value`) VALUES
+    if ($_need_expired) {
+        $GLOBALS['db']->run("ALTER TABLE `:prefix:admins` 
+            ADD `expired` 	int(11) NULL;");
+    }
+
+    $GLOBALS['db']->run("ALTER TABLE `:prefix:admins` 
+            ADD `skype`		varchar(128) 	NULL,
+            ADD `comment`	varchar(128)	 NULL,
+            ADD `vk`		varchar(128) 	NULL,
+            ADD `support`	int(6) 			NULL DEFAULT '0';");
+
+
+	$GLOBALS['db']->run("INSERT INTO `:prefix:settings` (`setting`, `value`) VALUES
 			('config.dateformat_ver2', 'd.m.Y'),
 			('config.text_home', 'Добро пожаловать на сайт игрового портала: AZAZA'),
 			('config.text_mon', 'У вас есть возможность управлять игроками через мониторинг(test)'),
@@ -45,21 +41,20 @@
 			('page.xleb',	'1'),
 			('theme.style', 'lightblue'),
 			('theme.style.color', '');");
-	
-	if(!$_settings)
-		return false;
-    
-    $qs  = array("UPDATE `" . DB_PREFIX . "_settings` SET `value` = '<center><p>SB Material Design упешно установлена!</p><p>Добро пожаловать :)</p></center>' WHERE `setting` = 'dash.intro.text';",
-            "UPDATE `" . DB_PREFIX . "_settings` SET `value` = 'images/logos/sb-dark.png' WHERE `setting` = 'template.logo';",
-            "UPDATE `" . DB_PREFIX . "_settings` SET `value` = 'SourceBans :: MATERIAL' WHERE `setting` = 'template.title';",
-            "UPDATE `" . DB_PREFIX . "_settings` SET `value` = '0' WHERE `setting` = 'config.enableprotest';",
-            "UPDATE `" . DB_PREFIX . "_settings` SET `value` = '0' WHERE `setting` = 'config.enablesubmit';",
-            "UPDATE `" . DB_PREFIX . "_settings` SET `value` = 'd.m.Y в H:i' WHERE `setting` = 'config.dateformat';",
-            "UPDATE `" . DB_PREFIX . "_settings` SET `value` = 'new_box' WHERE `setting` = 'config.theme';",
-            "UPDATE `" . DB_PREFIX . "_admins` SET `expired` = 0");
-	foreach ($qs as &$query) {
-        if (!$GLOBALS['db']->Execute($query)) return false;
-	}
 
-	return true;
-?>
+    $qs = array("UPDATE `:prefix:settings` SET `value` = '<center><p>SB Material Design успешно установлена/обновлена!</p><p>Добро пожаловать :)</p></center>' WHERE `setting` = 'dash.intro.text';",
+            "UPDATE `:prefix:settings` SET `value` = 'images/logos/sb-dark.png' WHERE `setting` = 'template.logo';",
+            "UPDATE `:prefix:settings` SET `value` = 'SourceBans :: MATERIAL' WHERE `setting` = 'template.title';",
+            "UPDATE `:prefix:settings` SET `value` = '0' WHERE `setting` = 'config.enableprotest';",
+            "UPDATE `:prefix:settings` SET `value` = '0' WHERE `setting` = 'config.enablesubmit';",
+            "UPDATE `:prefix:settings` SET `value` = 'd.m.Y в H:i' WHERE `setting` = 'config.dateformat';",
+            "UPDATE `:prefix:settings` SET `value` = 'new_box' WHERE `setting` = 'config.theme';",
+            "UPDATE `:prefix:admins` SET `expired` = 0");
+    foreach ($qs as &$query) {
+        $GLOBALS['db']->run($query);
+    }
+
+    return true;
+} catch (\PDOException $e) {
+    return false;
+}

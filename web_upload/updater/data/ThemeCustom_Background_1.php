@@ -1,20 +1,11 @@
 <?php
-	$ret = $GLOBALS['db']->Execute("INSERT INTO `".DB_PREFIX."_settings` (`setting`, `value`) VALUES ('theme.bg', '');");
-	if(!$ret)
-		return false;
-	
-	$ret = $GLOBALS['db']->Execute("INSERT INTO `".DB_PREFIX."_settings` (`setting`, `value`) VALUES ('theme.bg.rep', '');");
-	if(!$ret)
-		return false;
-	
-	$ret = $GLOBALS['db']->Execute("INSERT INTO `".DB_PREFIX."_settings` (`setting`, `value`) VALUES ('theme.bg.att', '');");
-	if(!$ret)
-		return false;
-	
-	$ret = $GLOBALS['db']->Execute("INSERT INTO `".DB_PREFIX."_settings` (`setting`, `value`) VALUES ('theme.bg.pos', '');");
-	if(!$ret)
-		return false;
-	
+try {
+    $GLOBALS['db']->Execute("INSERT INTO `:prefix:settings` (`setting`, `value`) VALUES ('theme.bg', '');");
+    $GLOBALS['db']->Execute("INSERT INTO `:prefix:settings` (`setting`, `value`) VALUES ('theme.bg.rep', '');");
+    $GLOBALS['db']->Execute("INSERT INTO `:prefix:settings` (`setting`, `value`) VALUES ('theme.bg.att', '');");
+    $GLOBALS['db']->Execute("INSERT INTO `:prefix:settings` (`setting`, `value`) VALUES ('theme.bg.pos', '');");
 
-	return true;
-?>
+    return true;
+} catch (\PDOException $e) {
+    return false;
+}

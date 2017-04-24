@@ -1,5 +1,7 @@
 <?php
-if (!$GLOBALS['db']->Execute("ALTER TABLE `".DB_PREFIX."_menu` ADD `newtab` INT(4) NOT NULL DEFAULT '0' AFTER `enabled`;"))
+try {
+    $GLOBALS['db']->run("ALTER TABLE `:prefix:menu` ADD `newtab` INT(4) NOT NULL DEFAULT '0' AFTER `enabled`;");
+    return true;
+} catch (\PDOException $e) {
     return false;
-return true;
-?>
+}

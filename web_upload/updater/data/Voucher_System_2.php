@@ -1,11 +1,9 @@
 <?php
-	$ret = $GLOBALS['db']->Execute("DELETE FROM `".DB_PREFIX."_vay4er`");
-	if(!$ret)
-		return false;
-	
-	$ret = $GLOBALS['db']->Execute("ALTER TABLE `".DB_PREFIX."_vay4er` ADD `servers` varchar(128) NOT NULL;");
-	if(!$ret)
-		return false;
+try {
+    $GLOBALS['db']->run("DELETE FROM `:prefix:vay4er`");
+    $GLOBALS['db']->run("ALTER TABLE `:prefix:vay4er` ADD `servers` varchar(128) NOT NULL;");
 
-	return true;
-?>
+    return true;
+} catch (\PDOException $e) {
+    return false;
+}

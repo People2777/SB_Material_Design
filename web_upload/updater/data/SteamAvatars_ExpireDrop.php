@@ -1,2 +1,3 @@
 <?php
-$GLOBALS['db']->Execute("ALTER TABLE `" . DB_PREFIX . "_avatars` DROP `expires`;");
+try {
+    $GLOBALS['db']->run("ALTER TABLE `" . DB_PREFIX . "_avatars` DROP `expires`;");
