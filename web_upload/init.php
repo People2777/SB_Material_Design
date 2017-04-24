@@ -98,7 +98,7 @@ if(!defined("DEVELOPER_MODE") && !defined("IS_UPDATE") && file_exists(ROOT."/upd
 
 if(!defined('SB_VERSION')){
 	define('SB_VERSION', '1.5.4.7');
-	define('MA_BRANCH', 'master');
+	define('MA_BRANCH', 'dev');
 }
 define('LOGIN_COOKIE_LIFETIME', (60*60*24*7)*2);
 define('COOKIE_PATH', '/');
@@ -122,20 +122,32 @@ error_reporting(E_ALL ^ E_NOTICE);
 // ---------------------------------------------------
 //  Setup our DB
 // ---------------------------------------------------
-include_once(INCLUDES_PATH . "/adodb/adodb.inc.php");
-include_once(INCLUDES_PATH . "/adodb/adodb-errorhandler.inc.php");
-$GLOBALS['db'] = ADONewConnection("mysqli://".DB_USER.':'.DB_PASS.'@'.DB_HOST.':'.DB_PORT.'/'.DB_NAME);
+require_once(INCLUDES_PATH . '/Database.php');
+$GLOBALS['db'] = new \Kruzya\Generic\Database(DB_HOST, DB_PORT, DB_USER, DB_PASS, DB_NAME, DB_PREFIX, (empty(DB_PREFIX) ? DB_PREFIX . "_" : ""));
 $GLOBALS['log'] = new CSystemLog();
 
-if( !is_object($GLOBALS['db']) )
-				die();
-				
-$mysql_server_info = $GLOBALS['db']->ServerInfo();
-$GLOBALS['db_version'] = $mysql_server_info['version'];
+// ---------------------------------------------------
+//  Load Settings
+// ---------------------------------------------------
+$GLOBALS['config'] = array();
+$data = $GLOBALS['db']->getAll("SELECT * FROM `:prefix:settings` GROUP BY `setting`, `value`");
 
-$debug = $GLOBALS['db']->Execute("SELECT value FROM `".DB_PREFIX."_settings` WHERE setting = 'config.debug';");
-if($debug->fields['value']=="1") {
-	define("DEVELOPER_MODE", true);
+foreach ($data as $kv) {
+    $GLOBALS['config'][$kv['setting']] = $kv['value'];
+}
+
+if ($GLOBALS['config']['config.debug'] == "1") {
+    define("DEVELOPER_MODE", true);
+}
+
+define('SB_BANS_PER_PAGE', $GLOBALS['config']['banlist.bansperpage']);
+define('MIN_PASS_LENGTH', $GLOBALS['config']['config.password.minlength']);
+$dateformat = !empty($GLOBALS['config']['config.dateformat'])?$GLOBALS['config']['config.dateformat']:"m-d-y H:i";
+
+if(empty($GLOBALS['config']['config.timezone'])) {
+    define('SB_TIMEZONE', 0);
+} else {
+    define('SB_TIMEZONE', $GLOBALS['config']['config.timezone']);
 }
 
 // ---------------------------------------------------
@@ -227,53 +239,6 @@ define('ALL_WEB', ADMIN_LIST_ADMINS|ADMIN_ADD_ADMINS|ADMIN_EDIT_ADMINS|ADMIN_DEL
 
 define('ALL_SERVER', SM_RESERVED_SLOT.SM_GENERIC.SM_KICK.SM_BAN.SM_UNBAN.SM_SLAY.SM_MAP.SM_CVAR.SM_CONFIG.SM_VOTE.SM_PASSWORD.SM_RCON.
 					 SM_CHEATS.SM_CUSTOM1.SM_CUSTOM2.SM_CUSTOM3. SM_CUSTOM4.SM_CUSTOM5.SM_CUSTOM6.SM_ROOT);
-
-$GLOBALS['db']->Execute("SET NAMES utf8;");
-					 
-$res = $GLOBALS['db']->Execute("SELECT * FROM ".DB_PREFIX."_settings GROUP BY `setting`, `value`");
-$GLOBALS['config'] = array();
-while (!$res->EOF)
-{
-	$setting = array($res->fields['setting'] => $res->fields['value']);
-	$GLOBALS['config'] = array_merge_recursive($GLOBALS['config'], $setting);
-	$res->MoveNext();
-}
-
-define('SB_BANS_PER_PAGE', $GLOBALS['config']['banlist.bansperpage']);
-define('MIN_PASS_LENGTH', $GLOBALS['config']['config.password.minlength']);
-$dateformat = !empty($GLOBALS['config']['config.dateformat'])?$GLOBALS['config']['config.dateformat']:"m-d-y H:i";
-
-if(version_compare(PHP_VERSION, "5") != -1)
-{
-    $offset = (empty($GLOBALS['config']['config.timezone'])?0:$GLOBALS['config']['config.timezone'])*3600;
-    date_default_timezone_set("GMT");
-    $abbrarray = timezone_abbreviations_list();
-    foreach ($abbrarray as $abbr) {
-        foreach ($abbr as $city) {
-            if ($city['offset'] == $offset && $city['dst'] == $GLOBALS['config']['config.summertime']) {
-                date_default_timezone_set($city['timezone_id']);
-                break 2;
-            }
-        }
-    }
-}
-else 
-{
-    if(empty($GLOBALS['config']['config.timezone']))
-    {
-        define('SB_TIMEZONE', 0);
-    } else {
-        define('SB_TIMEZONE', $GLOBALS['config']['config.timezone']);
-    }
-}
-
-// if(empty($GLOBALS['config']['config.timezone']))
-// {
-	// date_default_timezone_set("Europe/London");
-// }else{
-	// date_default_timezone_set($GLOBALS['config']['config.timezone']);
-// }
-
 
 // ---------------------------------------------------
 // Setup our templater

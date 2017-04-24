@@ -1496,4 +1496,14 @@ function kickClient($serverInstance, $identity) {
     $serverInstance->sendCommand(sprintf("kickid \"%s\"", $client['steam']));
     return true;
 }
-?>
+
+function init_session() {
+    static $init = false;
+    if ($init)
+        return;
+
+    $init = true;
+    require_once(INCLUDES_PATH . '/Sessions.php');
+    sessing_set_save_handler(new /Kruzya/Generic/Sessions($GLOBALS['db']), true);
+    session_start();
+}

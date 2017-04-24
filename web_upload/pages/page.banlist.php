@@ -50,7 +50,10 @@ if (isset($_GET['page']) && $_GET['page'] > 0)
 	$page = intval($_GET['page']);
 	$pagelink = "&page=".$page;
 }
-if (version_compare($GLOBALS['db_version'], "5.6.0") >= 0 && version_compare($GLOBALS['db_version'], "10.0.0")<0)
+
+$sql_version = $GLOBALS['db']->pdoAttribute(PDO::ATTR_SERVER_VERSION);
+
+if (version_compare($sql_version, "5.6.0") >= 0 && version_compare($sql_version, "10.0.0")<0)
 {
   $GLOBALS['db']->Execute("set session optimizer_switch='block_nested_loop=off';");
 }
