@@ -1,79 +1,23 @@
 <?php
-if(!defined("IN_SB")){echo "You should not be here. Only follow links!";die();}
+if (!defined('IN_SB')) {echo("Вы не должны быть здесь. Используйте только ссылки внутри системы!");die();}
 $errors = 0;
 $warnings = 0;
 
 if(isset($_POST['username'], $_POST['password'], $_POST['server'], $_POST['port'], $_POST['database'])) {
-	require(ROOT . "../includes/adodb/adodb.inc.php");
-	include_once(ROOT . "../includes/adodb/adodb-errorhandler.inc.php");
-	$server = "mysqli://" . $_POST['username'] . ":" . $_POST['password'] . "@" . $_POST['server'] . ":" . $_POST['port'] . "/" . $_POST['database'];
-	$db = ADONewConnection($server);
-	$db->Execute("SET NAMES `utf8`");
-	$vars = $db->Execute("SHOW VARIABLES");
-	$sql_version = "";
-	while(!$vars->EOF)
-	{
-		if($vars->fields['Variable_name'] == "version")
-		{
-			$sql_version = $vars->fields['Value'];
-			break;
-		}
-		$vars->MoveNext();
-	}
+	try {
+		$pdo_options =  [
+						PDO::ATTR_ERRMODE               => PDO::ERRMODE_EXCEPTION,
+						PDO::ATTR_DEFAULT_FETCH_MODE    => PDO::FETCH_ASSOC
+						];
+
+		$db = new PDO(sprintf("mysql:host=%s;dbname=%s;charset=utf8;port=%d", $_POST['server'], $_POST['database'], intval($_POST['port'])), $_POST['username'], $_POST['password'], $pdo_options);
+	} catch (PDOException $e) {}
+	
+	$sql_version = $db->getAttribute(PDO::ATTR_SERVER_VERSION);
 } else {
 	$sql_version = "Невозможно соединиться, не введены детали базы данных. (Вернитесь назад и введите данные заново.)";
 }
 ?>
-
-
-<div class="card m-b-0" id="messages-main">
-		<div class="ms-menu">
-			<div class="ms-block p-10">
-				<span class="c-black"><b>Процесс</b></span>
-			</div>
-
-			<div class="listview lv-user" id="install-progress">
-				<div class="lv-item media">
-					<div class="lv-avatar bgm-orange pull-left">1</div>
-					<div class="media-body">
-						<div class="lv-title"><del>Шаг: Лицензия</del></div>
-						<div class="lv-small"><i class="zmdi zmdi-timer-off zmdi-hc-fw c-red"></i> <del>Предыдущий шаг</del></div>
-					</div>
-				</div>
-
-				<div class="lv-item media">
-					<div class="lv-avatar bgm-orange pull-left">2</div>
-					<div class="media-body">
-						<div class="lv-title"><del>Шаг: База данных</del></div>
-						<div class="lv-small"><i class="zmdi zmdi-timer-off zmdi-hc-fw c-red"></i> <del>Предыдущий шаг</del></div>
-					</div>
-				</div>
-
-				<div class="lv-item media active">
-					<div class="lv-avatar bgm-red pull-left">3</div>
-					<div class="media-body">
-						<div class="lv-title">Шаг: Системные требования</div>
-						<div class="lv-small"><i class="zmdi zmdi-badge-check zmdi-hc-fw c-green"></i> Текущий шаг</div>
-					</div>
-				</div>
-
-				<div class="lv-item media">
-					<div class="lv-avatar bgm-orange pull-left">4</div>
-					<div class="media-body">
-						<div class="lv-title">Шаг: Создание таблиц</div>
-						<div class="lv-small"><i class="zmdi zmdi-time zmdi-hc-fw c-blue"></i> Следующий шаг</div>
-					</div>
-				</div>
-
-				<div class="lv-item media">
-					<div class="lv-avatar bgm-orange pull-left">5</div>
-					<div class="media-body">
-						<div class="lv-title">Шаг: Установка</div>
-						<div class="lv-small"><i class="zmdi zmdi-time zmdi-hc-fw c-blue"></i> Следующий шаг</div>
-					</div>
-				</div>
-			</div>
-		</div>
 		
 		<div class="ms-body" id="submit-main-full">
 			<div class="listview lv-message">
@@ -84,7 +28,7 @@ if(isset($_POST['username'], $_POST['password'], $_POST['server'], $_POST['port'
 				</div>
 
 				<div class="lv-body p-15">
-					На этой странице перечислены все требования для работы веб-панели SourceBans. Система сверит их с текущими данными. На этой странице будут также перечислены некоторые рекомендациями.
+					Ниже представлены все технические требования для корректной работы SourceBans. В случае несоответствия, установщик выделит красным все проблемные требования в текущей системе.
 				</div>
 				
 				<div class="lv-header-alt clearfix">
@@ -243,59 +187,48 @@ if(isset($_POST['username'], $_POST['password'], $_POST['server'], $_POST['port'
 							</thead>
 							<tbody>
 								<tr>
-									<td>Папка для демок (/demos)</td>
+									<td>Папка для демок (/demos/)</td>
 									<td>Н/A</td>
 									<td>Перезаписываемая</td>
 									<?php 
-										if(is_writable("../demos")){
+										if(is_writable("../demos/")){
 											$class = "success c-white";
 										} else { $class = "danger c-white"; $errors++; }
 									?>
 									<td class="<?= $class ?>"><?= is_writable("../demos") ? "Да" : "Нет" ?></td>
 								</tr>
 								<tr>
-									<td>Папка кэша (/themes_c)</td>
+									<td>Папка кеша (/themes_c/)</td>
 									<td>Н/A</td>
 									<td>Перезаписываемая</td>
 									<?php 
-										if(is_writable("../themes_c")){
+										if(is_writable("../themes_c/")){
 											$class = "success c-white";
 										} else {  $class = "danger c-white"; $errors++; }
 									?>
-									<td class="<?= $class ?>"><?= is_writable("../themes_c") ? "Да" : "Нет" ?></td>
+									<td class="<?= $class ?>"><?= is_writable("../themes_c/") ? "Да" : "Нет" ?></td>
 								</tr>
 								<tr>
-									<td>Папка иконок МОДов (/images/games)</td>
+									<td>Папка иконок МОДов (/images/games/)</td>
 									<td>Н/A</td>
 									<td>Перезаписываемая</td>
 									<?php 
-										if(is_writable("../images/games")){
+										if(is_writable("../images/games/")){
 											$class = "success c-white";
 										} else {  $class = "danger c-white"; $errors++; }
 									?>
 									<td class="<?= $class ?>"><?= is_writable("../images/games") ? "Да" : "Нет" ?></td>
 								</tr>
 								<tr>
-									<td>Папка изображений карт (/images/maps)</td>
+									<td>Папка изображений карт (/images/maps/)</td>
 									<td>Н/A</td>
 									<td>Перезаписываемая</td>
 									<?php 
-										if(is_writable("../images/maps")){
+										if(is_writable("../images/maps/")){
 											$class = "success c-white";
 										} else {  $class = "danger c-white"; $errors++; }
 									?>
 									<td class="<?= $class ?>"><?= is_writable("../images/maps") ? "Да" : "Нет" ?></td>
-								</tr>
-								<tr>
-									<td>Конфигурационный файл (/config.php)</td>
-									<td>Н/A</td>
-									<td>Перезаписываемая</td>
-									<?php 
-										if(is_writable("../config.php")){
-											$class = "success c-white";
-										} else {  $class = "danger c-white"; $errors++; }
-									?>
-									<td class="<?= $class ?>"><?= is_writable("../config.php") ? "Да" : "Нет" ?></td>
 								</tr>
 							</tbody>
 						</table>
@@ -338,7 +271,7 @@ if(isset($_POST['username'], $_POST['password'], $_POST['server'], $_POST['port'
 					</div>
 					&nbsp;
 					<div class="p-10" align="center">
-						<button onclick="next()" class="btn btn-primary waves-effect" id="button" name="button">Далее</button>
+						<button onclick="next()" class="btn btn-primary waves-effect" id="button" name="button">Продолжить</button>
 						<button onclick="$('sendback').submit();" name="button" class="btn btn-info waves-effect" id="button">Перепроверить</button>
 					</div>
 					<input type="hidden" name="postd" value="1">

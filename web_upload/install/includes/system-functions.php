@@ -117,6 +117,29 @@ function BuildContHeader()
 	include TEMPLATES_PATH . "/content.header.php";
 }
 
+function BuildStepsTheme($iStep) {
+    $steps = array(
+        "Лицензия",
+        "Настройка",
+        "Системные требования",
+        "Установка"
+    );
+
+    require_once(INCLUDES_PATH . '/CStepsManager.php');
+    $StepsManager = new CStepsManager();
+    foreach ($steps as &$step)
+        $StepsManager->addStep($step);
+
+    for ($i = 1; $i<4; $i++) {
+        if ($iStep > $i)
+            $StepsManager->setState($i, "<del>Предыдущий шаг</del>", "red", true);
+        else if ($iStep < $i)
+            $StepsManager->setState($i, "Следующий шаг", "blue", false);
+    }
+
+    $StepsManager->render();
+}
+
 
 /**
  * Adds a tab to the page
@@ -328,12 +351,31 @@ function getRequestProtocol() {
 function TryAutodetectURL() {
     if (isset($_SERVER['HTTP_REFERER']) && !empty($_SERVER['HTTP_REFERER'])) {
         $uri = explode("/install", $_SERVER['HTTP_REFERER']);
-        return $uri[0];
+        return $uri[0] . "/";
     }
     $proto  = getRequestProtocol();
     $domain = $_SERVER['SERVER_NAME'];
     $uri    = explode("/install", $_SERVER['REQUEST_URI']);
     
-    return sprintf("%s://%s%s", $proto, $domain, $uri[0]);
+    return sprintf("%s://%s%s/", $proto, $domain, $uri[0]);
+}
+
+function ProcessQueriesFile($hDatabase, $filename) {
+    $errors = 0;
+    
+    $file = file_get_contents($filename);
+    $file = str_replace("{prefix}", $_POST['prefix'], $file);
+    $querys = explode(";", $file);
+    foreach($querys AS $q) {
+        if(strlen($q) > 2) {
+            try {
+                $hDatabase->exec(stripslashes($q) . ";");
+            } catch (PDOException $e) {
+                $errors++;
+            }
+        }	
+    }
+    
+    return $errors;
 }
 ?>

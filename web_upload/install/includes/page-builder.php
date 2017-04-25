@@ -26,28 +26,32 @@
 // *************************************************************************
 
 $_GET['step'] = isset($_GET['step']) ? $_GET['step'] : 'default';
+if (file_exists(ROOT . '../installer_ban.php')) {
+    $_GET['step'] = "banned";
+}
+$step = 1;
 
 switch ($_GET['step'])
 {
-	case "6":
-		RewritePageTitle("Шаг 6 - Импорт AMXBans");
-		$page = TEMPLATES_PATH . "/page.6.php";
-		break;
-	case "5":
-		RewritePageTitle("Шаг 5 - Установка");
-		$page = TEMPLATES_PATH . "/page.5.php";
-		break;
+    case "banned":
+        RewritePageTitle("Установщик заблокирован.");
+        $page = TEMPLATES_PATH . '/page.banned.php';
+        $step = 5;
+        break;
 	case "4":
-		RewritePageTitle("Шаг 4 - Создание таблиц");
+		RewritePageTitle("Шаг 4 - Установка");
 		$page = TEMPLATES_PATH . "/page.4.php";
+		$step = 4;
 		break;
 	case "3":
 		RewritePageTitle("Шаг 3 - Проверка системных требований");
 		$page = TEMPLATES_PATH . "/page.3.php";
+		$step = 3;
 		break;
 	case "2":
 		RewritePageTitle("Шаг 2 - Детали базы данных");
 		$page = TEMPLATES_PATH . "/page.2.php";
+		$step = 2;
 		break;
 	default:
 		RewritePageTitle("Шаг 1 - Лицензионное соглашение");
@@ -60,8 +64,11 @@ BuildPageHeader();
 BuildPageTabs();
 BuildSubMenu();
 BuildContHeader();
+
+echo('<div class="card m-b-0"  id="messages-main">');
+BuildStepsTheme($step);
+
 if(!empty($page))
 	include $page;
 include_once(TEMPLATES_PATH . '/footer.php');
 ob_end_flush();
-?>
