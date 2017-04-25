@@ -4,7 +4,7 @@
  *
  * @package     GenericClasses
  * @subpackage  Classes
- * @version     1.0
+ * @version     1.1
  * @author      Kruzya <admin@crazyhackgut.ru>
  */
 
@@ -173,7 +173,7 @@ class Database {
     public function getAll($query, $values = array(), $type = \PDO::FETCH_ASSOC) {
         $data = array();
         $hStatement = $this->run($query, $values);
-        while (!$row = $hStatement->fetch($type)) {
+        while ($row = $hStatement->fetch($type)) {
             $data[] = $row;
         }
 
